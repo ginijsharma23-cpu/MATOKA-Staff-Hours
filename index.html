@@ -266,8 +266,16 @@ let firstPinStep = 1;
 let firstPinValue = '';
 let staffCache = [];
 
-// ── Google Apps Script fetch helper ─────────────────────
+// ── Config ───────────────────────────────────────────────
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFOQuTe2-8NrIh5l5_U38O2nh-khVcoaxTG6_He4OHd0mWlLtgo67DJFUPordUQkl8/exec';
+
+// Staff names hardcoded here so login works without any API call
+// Update this list if staff changes
+const STAFF_NAMES = [
+  'Akhlidin','Aliana','Amer','Arman','Bekha','Denis',
+  'Evgene','Iskander','Julia','Malik','Malika',
+  'Manu (Junior)','Manu (Senior)','Max','Melik','Nur'
+];
 
 let _cbId = 0;
 function gsr(action, params, onSuccess, onFailure) {
@@ -299,7 +307,7 @@ document.getElementById('today-label').textContent =
   'Today · ' + new Date().toLocaleDateString('default',{weekday:'long',day:'numeric',month:'long'});
 document.getElementById('shift-date').value = todayStr();
 
-gsr('getStaffNames',[],names=>{const sel=document.getElementById('login-name');names.forEach(n=>sel.innerHTML+=`<option>${n}</option>`);});
+STAFF_NAMES.forEach(n=>document.getElementById('login-name').innerHTML+=`<option>${n}</option>`);
 
 function todayStr() {
   const d = new Date();
@@ -410,7 +418,7 @@ function rebuildNameAsSelect() {
   const sel = document.createElement('select');
   sel.id = 'shift-name';
   sel.innerHTML = '<option value="">Select name...</option>';
-  gsr('getStaffNames',[],names=>names.forEach(n=>sel.innerHTML+=`<option>${n}</option>`));
+  STAFF_NAMES.forEach(n=>sel.innerHTML+=`<option>${n}</option>`);
   wrap.replaceChild(sel, document.getElementById('shift-name'));
 }
 
