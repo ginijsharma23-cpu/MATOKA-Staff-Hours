@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Staff Hours — Matoka</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F2F2F7;color:#1C1C1E;font-size:15px}
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#1C1C1E;padding:14px 16px;display:flex;align-items:center;position:sticky;top:0;z-index:10}
+.topbar-title{color:#FFF;font-size:17px;font-weight:700;letter-spacing:-.3px}
+.topbar-sub{color:rgba(255,255,255,.5);font-size:11px;margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.logout-btn{background:rgba(255,255,255,.12);border:none;color:#FFF;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.nav{display:flex;background:#FFF;border-bottom:1px solid #E5E5EA;position:sticky;top:52px;z-index:9}
+.nav-btn{flex:1;padding:12px 4px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:#8E8E93;border-bottom:2px solid transparent;transition:all .15s;font-family:inherit}
+.nav-btn.active{color:#1C1C1E;border-bottom:2px solid #1C1C1E}
+.page{display:none;padding:16px;flex:1}
+.page.active{display:block}
+.card{background:#FFF;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.slabel{font-size:11px;font-weight:700;color:#8E8E93;letter-spacing:.6px;text-transform:uppercase;margin-bottom:12px}
+.field{margin-bottom:14px}
+.flabel{font-size:12px;color:#3A3A3C;margin-bottom:5px;font-weight:600}
+select,input{width:100%;padding:11px 13px;border:1.5px solid #E5E5EA;border-radius:10px;font-size:15px;background:#FFF;color:#1C1C1E;font-family:inherit;-webkit-appearance:none;appearance:none;outline:none;transition:border-color .15s}
+select:focus,input:focus{border-color:#1C1C1E}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%238E8E93' stroke-width='2.5' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+.btn{width:100%;padding:14px;background:#1C1C1E;color:#FFF;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;letter-spacing:-.2px}
+.btn:active{opacity:.8}
+.btn.outline{background:#FFF;color:#1C1C1E;border:1.5px solid #1C1C1E}
+.btn.small{padding:8px 14px;font-size:13px;width:auto}
+.btn.danger{background:#FF3B30;border-color:#FF3B30;color:#FFF}
+.btn.disabled{opacity:.4;pointer-events:none}
+.time-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.toast{padding:12px 16px;border-radius:10px;margin-bottom:14px;display:none;align-items:center;gap:10px;font-size:14px;font-weight:600}
+.toast.ok{background:#34C759;color:#FFF}
+.toast.err{background:#FF3B30;color:#FFF}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat{background:#FFF;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.stat-label{font-size:11px;color:#8E8E93;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.stat-val{font-size:26px;font-weight:800;color:#1C1C1E;letter-spacing:-.5px}
+.stat-sub{font-size:11px;color:#AEAEB2;margin-top:2px}
+.shift-row{padding:12px 0;border-bottom:1px solid #F2F2F7;display:flex;justify-content:space-between;align-items:flex-start}
+.shift-row:last-child{border-bottom:none}
+.shift-name{font-size:14px;font-weight:700}
+.shift-meta{font-size:12px;color:#8E8E93;margin-top:2px}
+.shift-break{font-size:12px;color:#FF9500;margin-top:2px;font-weight:600}
+.shift-hrs{font-size:16px;font-weight:800;color:#1C1C1E;text-align:right;letter-spacing:-.3px}
+.shift-earn{font-size:11px;color:#8E8E93;margin-top:2px;text-align:right}
+.staff-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #F2F2F7}
+.staff-row:last-child{border-bottom:none}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700;margin-left:5px}
+.pill-p{background:#E3F2FD;color:#1565C0}
+.pill-k{background:#FFF8E1;color:#F57F17}
+.pill-ok{background:#E8F5E9;color:#2E7D32}
+.pill-no{background:#FFEBEE;color:#C62828}
+.empty{text-align:center;padding:48px 16px;color:#AEAEB2;font-size:14px}
+.empty-icon{font-size:40px;margin-bottom:10px}
+.mode-btn{flex:1;padding:9px 4px;font-size:12px;font-weight:700;border:1.5px solid #E5E5EA;border-radius:8px;background:#FFF;color:#8E8E93;cursor:pointer;transition:all .15s;font-family:inherit}
+.mode-btn.active{background:#1C1C1E;color:#FFF;border-color:#1C1C1E}
+.loader{text-align:center;padding:32px;color:#AEAEB2;font-size:14px}
+.loader::after{content:'';display:inline-block;width:20px;height:20px;border:2px solid #E5E5EA;border-top-color:#1C1C1E;border-radius:50%;animation:spin .7s linear infinite;margin-left:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Login */
+#login-screen{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding:32px 16px;background:#F2F2F7}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo-icon{font-size:52px;margin-bottom:10px}
+.login-logo-title{font-size:26px;font-weight:800;color:#1C1C1E;letter-spacing:-.5px}
+.login-logo-sub{font-size:14px;color:#8E8E93;margin-top:4px}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin:20px 0}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:#E5E5EA;transition:all .15s}
+.pin-dot.filled{background:#1C1C1E;transform:scale(1.1)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:0 auto}
+.pin-key{padding:18px;font-size:24px;font-weight:700;background:#FFF;border:1.5px solid #E5E5EA;border-radius:12px;cursor:pointer;text-align:center;color:#1C1C1E;transition:all .1s;-webkit-tap-highlight-color:transparent;font-family:inherit;letter-spacing:-.3px}
+.pin-key:active{background:#F2F2F7;transform:scale(.95)}
+.pin-key.del{font-size:18px;color:#8E8E93}
+.pin-key.empty-key{background:transparent;border-color:transparent;pointer-events:none}
+.login-hint{text-align:center;font-size:13px;color:#AEAEB2;margin-top:16px}
+.login-err{text-align:center;font-size:13px;color:#FF3B30;margin-top:8px;min-height:20px;font-weight:600}
+.first-pin-info{background:#EBF5FB;border-radius:10px;padding:12px;font-size:13px;color:#1565C0;margin-bottom:16px;text-align:center;font-weight:600}
+.connecting{text-align:center;padding:12px;font-size:13px;color:#8E8E93;display:none}
+</style>
+</head>
+<body>
+
+<div class="app" id="main-app" style="display:none">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">🍽 Matoka Staff Hours</div>
+      <div class="topbar-sub" id="today-label"></div>
+    </div>
+    <div class="topbar-right">
+      <span id="user-label" style="color:rgba(255,255,255,.7);font-size:13px;font-weight:600"></span>
+      <button class="logout-btn" onclick="logout()">Log out</button>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" id="nav-clock" onclick="showPage('clock',this)">⏱ Clock In/Out</button>
+    <button class="nav-btn" id="nav-hours" onclick="showPage('hours',this)">📊 My Hours</button>
+    <button class="nav-btn" id="nav-admin" onclick="showPage('admin',this)" style="display:none">⚙️ Admin</button>
+  </div>
+
+  <!-- CLOCK IN/OUT -->
+  <div id="page-clock" class="page active">
+    <div class="toast" id="clock-toast"></div>
+    <div class="card">
+      <div class="slabel">Log your shift</div>
+      <div class="field">
+        <div class="flabel">Your name</div>
+        <input type="text" id="shift-name" readonly/>
+      </div>
+      <div class="field">
+        <div class="flabel">Restaurant</div>
+        <select id="restaurant">
+          <option value="">Select...</option>
+          <option>Podebradska</option>
+          <option>Kodanska</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="flabel">Date</div>
+        <input type="date" id="shift-date"/>
+      </div>
+      <div class="field">
+        <div class="time-row">
+          <div>
+            <div class="flabel">Clock in</div>
+            <input type="time" id="clock-in"/>
+          </div>
+          <div>
+            <div class="flabel">Clock out</div>
+            <input type="time" id="clock-out"/>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="flabel">Unpaid break (hours) — optional</div>
+        <input type="number" id="break-hrs" placeholder="e.g. 1 or 1.5" min="0" step="0.5"/>
+      </div>
+      <div class="field">
+        <div class="flabel">Notes (optional)</div>
+        <input type="text" id="notes" placeholder="e.g. covered for someone"/>
+      </div>
+      <button class="btn" id="submit-btn" onclick="submitShift()">Save shift</button>
+    </div>
+  </div>
+
+  <!-- MY HOURS -->
+  <div id="page-hours" class="page">
+    <div class="card">
+      <div class="slabel">Filter</div>
+      <div class="field">
+        <div class="flabel">Staff member</div>
+        <select id="filter-name"><option value="">All staff</option></select>
+      </div>
+      <div class="field">
+        <div class="flabel">Restaurant</div>
+        <select id="filter-rest">
+          <option value="">Both</option>
+          <option>Podebradska</option>
+          <option>Kodanska</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="flabel">Filter by</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button id="mode-month-btn" class="mode-btn active" onclick="setMode('month')">Month</button>
+          <button id="mode-range-btn" class="mode-btn" onclick="setMode('range')">Date range</button>
+          <button id="mode-day-btn" class="mode-btn" onclick="setMode('day')">Single day</button>
+        </div>
+      </div>
+      <div id="mode-month" class="filter-mode">
+        <div class="flabel">Month</div>
+        <select id="filter-month"></select>
+      </div>
+      <div id="mode-range" class="filter-mode" style="display:none">
+        <div class="two-col">
+          <div><div class="flabel">From</div><input type="date" id="filter-from"/></div>
+          <div><div class="flabel">To</div><input type="date" id="filter-to"/></div>
+        </div>
+      </div>
+      <div id="mode-day" class="filter-mode" style="display:none">
+        <div class="flabel">Date</div>
+        <input type="date" id="filter-day"/>
+      </div>
+      <button class="btn" style="margin-top:14px" onclick="loadHours()">View hours</button>
+    </div>
+    <div id="hours-output"><div class="empty"><div class="empty-icon">📊</div>Select filters above and tap View.</div></div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="page-admin" class="page">
+    <div class="card">
+      <div class="slabel">Staff, rates & PINs</div>
+      <div id="admin-staff-list"><div class="loader">Loading</div></div>
+    </div>
+    <div class="card">
+      <div class="slabel">Export data</div>
+      <p style="font-size:13px;color:#8E8E93;margin-bottom:12px">Download all shifts as CSV for Excel or your accountant.</p>
+      <button class="btn outline" onclick="exportCSV()">⬇ Download CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">
+    <div class="login-logo-icon">🍽</div>
+    <div class="login-logo-title">Matoka Staff Hours</div>
+    <div class="login-logo-sub">Podebradska & Kodanska</div>
+  </div>
+  <div class="card" style="max-width:340px;margin:0 auto">
+    <div id="first-pin-banner" class="first-pin-info" style="display:none">
+      First time? Choose a 4-digit PIN you'll use every time.
+    </div>
+    <div class="field">
+      <div class="flabel">Your name</div>
+      <select id="login-name" onchange="onNameChange()">
+        <option value="">Select your name...</option>
+        <option value="Manager">Manager</option>
+      </select>
+    </div>
+    <div class="connecting" id="connecting">Checking...</div>
+    <div class="field">
+      <div class="flabel" id="pin-label">Your PIN</div>
+      <div class="pin-dots">
+        <div class="pin-dot" id="d0"></div>
+        <div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div>
+        <div class="pin-dot" id="d3"></div>
+      </div>
+      <div class="pin-pad">
+        <div class="pin-key" onclick="pinKey('1')">1</div>
+        <div class="pin-key" onclick="pinKey('2')">2</div>
+        <div class="pin-key" onclick="pinKey('3')">3</div>
+        <div class="pin-key" onclick="pinKey('4')">4</div>
+        <div class="pin-key" onclick="pinKey('5')">5</div>
+        <div class="pin-key" onclick="pinKey('6')">6</div>
+        <div class="pin-key" onclick="pinKey('7')">7</div>
+        <div class="pin-key" onclick="pinKey('8')">8</div>
+        <div class="pin-key" onclick="pinKey('9')">9</div>
+        <div class="pin-key empty-key"></div>
+        <div class="pin-key" onclick="pinKey('0')">0</div>
+        <div class="pin-key del" onclick="pinDel()">⌫</div>
+      </div>
+    </div>
+    <div class="login-err" id="login-err"></div>
+  </div>
+  <div class="login-hint">Manager PIN: contact the owner</div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFOQuTe2-8NrIh5l5_U38O2nh-khVcoaxTG6_He4OHd0mWlLtgo67DJFUPordUQkl8/exec';
+
+// Hardcoded staff names — update here if staff changes
+const STAFF_NAMES = [
+  'Akhlidin','Aliana','Amer','Arman','Bekha','Denis',
+  'Evgene','Iskander','Julia','Malik','Malika',
+  'Manu (Junior)','Manu (Senior)','Max','Melik','Nur'
+];
+
+// ── State ─────────────────────────────────────────────────
+let session = null;
+let staffCache = [];
+let pinBuffer = '';
+let isFirstPin = false;
+let firstPinStep = 1;
+let firstPinValue = '';
+let filterMode = 'month';
+let _cbId = 0;
+
+// ── API call via JSONP ────────────────────────────────────
+function api(action, params, onSuccess, onFailure) {
+  const cb = '_cb' + (++_cbId);
+  const url = GAS_URL +
+    '?action=' + encodeURIComponent(action) +
+    '&params=' + encodeURIComponent(JSON.stringify(params || [])) +
+    '&callback=' + cb;
+  const timer = setTimeout(() => {
+    delete window[cb];
+    const s = document.getElementById(cb);
+    if (s) s.remove();
+    if (onFailure) onFailure('Request timed out');
+  }, 15000);
+  window[cb] = function(data) {
+    clearTimeout(timer);
+    delete window[cb];
+    const s = document.getElementById(cb);
+    if (s) s.remove();
+    if (data && data.error) { if (onFailure) onFailure(data.error); }
+    else if (onSuccess) onSuccess(data && data.result !== undefined ? data.result : data);
+  };
+  const script = document.createElement('script');
+  script.id = cb;
+  script.src = url;
+  script.onerror = function() {
+    clearTimeout(timer);
+    delete window[cb];
+    script.remove();
+    if (onFailure) onFailure('Network error — check your connection');
+  };
+  document.head.appendChild(script);
+}
+
+// ── Init ──────────────────────────────────────────────────
+document.getElementById('today-label').textContent =
+  'Today · ' + new Date().toLocaleDateString('default',{weekday:'long',day:'numeric',month:'long'});
+document.getElementById('shift-date').value = todayStr();
+
+// Populate login dropdown from hardcoded list
+STAFF_NAMES.forEach(n => {
+  document.getElementById('login-name').innerHTML += `<option value="${n}">${n}</option>`;
+});
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// ── Login ─────────────────────────────────────────────────
+function onNameChange() {
+  pinBuffer=''; isFirstPin=false; firstPinStep=1; firstPinValue='';
+  updateDots();
+  document.getElementById('login-err').textContent='';
+  document.getElementById('first-pin-banner').style.display='none';
+  document.getElementById('pin-label').textContent='Your PIN';
+  const name = document.getElementById('login-name').value;
+  if (!name || name==='Manager') return;
+  document.getElementById('connecting').style.display='block';
+  api('hasPin',[name], has => {
+    document.getElementById('connecting').style.display='none';
+    if (!has) {
+      isFirstPin=true;
+      document.getElementById('first-pin-banner').style.display='block';
+      document.getElementById('pin-label').textContent='Choose a 4-digit PIN';
+    }
+  }, () => document.getElementById('connecting').style.display='none');
+}
+
+function updateDots() {
+  for (let i=0;i<4;i++)
+    document.getElementById('d'+i).classList.toggle('filled', i<pinBuffer.length);
+}
+
+function pinKey(k) {
+  if (pinBuffer.length>=4) return;
+  pinBuffer+=k; updateDots();
+  if (pinBuffer.length===4) setTimeout(handlePinComplete,120);
+}
+
+function pinDel() {
+  pinBuffer=pinBuffer.slice(0,-1); updateDots();
+  document.getElementById('login-err').textContent='';
+}
+
+function handlePinComplete() {
+  const name = document.getElementById('login-name').value;
+  if (!name) { showErr('Please select your name first.'); return; }
+  if (isFirstPin) {
+    if (firstPinStep===1) {
+      firstPinValue=pinBuffer; pinBuffer=''; updateDots();
+      firstPinStep=2;
+      document.getElementById('pin-label').textContent='Confirm your PIN';
+      document.getElementById('first-pin-banner').textContent='Enter the same PIN again to confirm.';
+    } else {
+      if (pinBuffer!==firstPinValue) {
+        showErr("PINs don't match. Try again.");
+        pinBuffer=''; firstPinStep=1; firstPinValue=''; updateDots();
+        document.getElementById('pin-label').textContent='Choose a 4-digit PIN';
+        document.getElementById('first-pin-banner').textContent="First time? Choose a 4-digit PIN you'll use every time.";
+        return;
+      }
+      api('setPin',[name,pinBuffer], res => {
+        if (res && res.success) { isFirstPin=false; doLogin(name,pinBuffer); }
+        else { showErr((res&&res.error)||'Error setting PIN.'); pinBuffer=''; updateDots(); }
+      }, e => { showErr('Connection error. Try again.'); pinBuffer=''; updateDots(); });
+    }
+    return;
+  }
+  doLogin(name,pinBuffer);
+}
+
+function doLogin(name,pin) {
+  document.getElementById('connecting').style.display='block';
+  api('login',[name,pin], result => {
+    document.getElementById('connecting').style.display='none';
+    if (!result) { showErr('Wrong PIN. Try again.'); pinBuffer=''; updateDots(); return; }
+    session=result; enterApp();
+  }, e => {
+    document.getElementById('connecting').style.display='none';
+    showErr('Connection error. Try again.');
+    pinBuffer=''; updateDots();
+  });
+}
+
+function showErr(msg) {
+  document.getElementById('login-err').textContent=msg;
+  pinBuffer=''; updateDots();
+}
+
+// ── Enter app ─────────────────────────────────────────────
+function enterApp() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main-app').style.display='flex';
+  document.getElementById('user-label').textContent=session.name;
+
+  if (session.role==='manager') {
+    document.getElementById('nav-admin').style.display='block';
+    // Build name select for manager clock in
+    const wrap = document.getElementById('shift-name').parentNode;
+    const sel = document.createElement('select');
+    sel.id='shift-name';
+    sel.innerHTML='<option value="">Select name...</option>';
+    STAFF_NAMES.forEach(n => sel.innerHTML+=`<option>${n}</option>`);
+    wrap.replaceChild(sel, document.getElementById('shift-name'));
+    // Load full staff for filter
+    api('getStaff',[],staff=>{
+      staffCache=staff;
+      const fn=document.getElementById('filter-name');
+      fn.innerHTML='<option value="">All staff</option>';
+      staff.forEach(s=>fn.innerHTML+=`<option value="${s.name}">${s.name}</option>`);
+    });
+  } else {
+    document.getElementById('shift-name').value=session.name;
+    const rd=document.getElementById('restaurant');
+    for(let i=0;i<rd.options.length;i++){
+      if(rd.options[i].value===session.restaurant){rd.selectedIndex=i;break;}
+    }
+    document.getElementById('filter-name').innerHTML=
+      `<option value="${session.name}">${session.name}</option>`;
+    staffCache=[session];
+  }
+  initMonths();
+}
+
+function logout() {
+  session=null; pinBuffer=''; isFirstPin=false; firstPinStep=1; firstPinValue='';
+  document.getElementById('login-name').value='';
+  document.getElementById('login-err').textContent='';
+  document.getElementById('first-pin-banner').style.display='none';
+  document.getElementById('pin-label').textContent='Your PIN';
+  updateDots();
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-clock').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-clock').classList.add('active');
+}
+
+// ── Navigation ────────────────────────────────────────────
+function showPage(id,btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='admin') loadAdminStaff();
+}
+
+// ── Submit shift ──────────────────────────────────────────
+function submitShift() {
+  const nameEl=document.getElementById('shift-name');
+  const name=nameEl.value;
+  const rest=document.getElementById('restaurant').value;
+  const date=document.getElementById('shift-date').value;
+  const ci=document.getElementById('clock-in').value;
+  const co=document.getElementById('clock-out').value;
+  const breakH=parseFloat(document.getElementById('break-hrs').value)||0;
+  const notes=document.getElementById('notes').value;
+  if(!name||!rest||!date||!ci||!co){showToast('clock-toast','Please fill in all fields.',true);return;}
+  const [h1,m1]=ci.split(':').map(Number),[h2,m2]=co.split(':').map(Number);
+  if((h2*60+m2)<=(h1*60+m1)){showToast('clock-toast','Clock out must be after clock in.',true);return;}
+  const btn=document.getElementById('submit-btn');
+  btn.textContent='Saving...'; btn.disabled=true;
+  api('saveShift',[name,rest,date,ci,co,breakH,notes], res=>{
+    btn.textContent='Save shift'; btn.disabled=false;
+    if(!res||!res.success){showToast('clock-toast',res&&res.error||'Error saving.',true);return;}
+    let msg='Saved! '+res.hours+'h paid for '+name+'.';
+    if(breakH>0) msg+=' ('+res.gross+'h − '+breakH+'h break)';
+    showToast('clock-toast',msg);
+    document.getElementById('clock-in').value='';
+    document.getElementById('clock-out').value='';
+    document.getElementById('break-hrs').value='';
+    document.getElementById('notes').value='';
+  }, e=>{btn.textContent='Save shift';btn.disabled=false;showToast('clock-toast','Error: '+e,true);});
+}
+
+// ── Hours ─────────────────────────────────────────────────
+function initMonths() {
+  api('getMonths',[],months=>{
+    const fm=document.getElementById('filter-month');
+    fm.innerHTML='';
+    months.forEach(m=>fm.innerHTML+=`<option value="${m}">${fmtMonth(m)}</option>`);
+  });
+}
+
+function setMode(mode) {
+  filterMode=mode;
+  ['month','range','day'].forEach(m=>{
+    document.getElementById('mode-'+m).style.display=m===mode?'block':'none';
+    document.getElementById('mode-'+m+'-btn').classList.toggle('active',m===mode);
+  });
+}
+
+function loadHours() {
+  const name=document.getElementById('filter-name').value;
+  const rest=document.getElementById('filter-rest').value;
+  const out=document.getElementById('hours-output');
+  let month='',dateFrom='',dateTo='';
+  if(filterMode==='month'){
+    month=document.getElementById('filter-month').value;
+    if(!month){showToast('clock-toast','Please select a month.',true);return;}
+  } else if(filterMode==='range'){
+    dateFrom=document.getElementById('filter-from').value;
+    dateTo=document.getElementById('filter-to').value;
+    if(!dateFrom||!dateTo){showToast('clock-toast','Please select both dates.',true);return;}
+  } else {
+    const day=document.getElementById('filter-day').value;
+    if(!day){showToast('clock-toast','Please select a date.',true);return;}
+    dateFrom=dateTo=day;
+  }
+  out.innerHTML='<div class="loader">Loading</div>';
+  api('getShifts',[name,month,rest,dateFrom,dateTo],shifts=>{
+    if(!shifts||!shifts.length){out.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>No shifts found for this period.</div>';return;}
+    const getRateForName=n=>{
+      const obj=staffCache.find(s=>s.name===n);
+      if(obj) return obj.rate;
+      if(session.role==='staff'&&session.name===n) return session.rate;
+      return 0;
+    };
+    const totalPaid=shifts.reduce((a,s)=>a+(Number(s.hours)||0),0);
+    const totalBreak=shifts.reduce((a,s)=>a+(Number(s.breakHrs)||0),0);
+    const totalEarn=shifts.reduce((a,s)=>a+(s.hours*getRateForName(s.name)),0);
+    out.innerHTML=`
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">Paid hours</div><div class="stat-val">${totalPaid.toFixed(1)}h</div><div class="stat-sub">excl. breaks</div></div>
+        <div class="stat"><div class="stat-label">Break hours</div><div class="stat-val">${totalBreak.toFixed(1)}h</div><div class="stat-sub">unpaid</div></div>
+        <div class="stat"><div class="stat-label">Shifts</div><div class="stat-val">${shifts.length}</div><div class="stat-sub">${(totalPaid/shifts.length).toFixed(1)}h avg</div></div>
+        <div class="stat"><div class="stat-label">Est. earnings</div><div class="stat-val">${totalEarn?Math.round(totalEarn)+' Kč':'—'}</div><div class="stat-sub">gross${!name?' · all staff':''}</div></div>
+      </div>
+      <div class="card">
+        <div class="slabel">Shift log</div>
+        ${shifts.map(s=>{
+          const pill=s.restaurant==='Podebradska'?'pill-p':'pill-k';
+          const r=getRateForName(s.name);
+          const earnStr=r?`<div class="shift-earn">${Math.round(s.hours*r)} Kč</div>`:'';
+          const bh=Number(s.breakHrs)||0;
+          const breakStr=bh>0?`<div class="shift-break">${(s.hours+bh).toFixed(1)}h − ${bh}h break = ${s.hours.toFixed(1)}h paid</div>`:'';
+          return `<div class="shift-row">
+            <div style="flex:1">
+              <div class="shift-name">${s.name}<span class="pill ${pill}">${s.restaurant}</span></div>
+              <div class="shift-meta">${s.date} · ${s.clockIn} – ${s.clockOut}${s.notes?' · '+s.notes:''}</div>
+              ${breakStr}
+            </div>
+            <div style="text-align:right;min-width:64px">
+              <div class="shift-hrs">${s.hours.toFixed(1)}h</div>
+              ${earnStr}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  },e=>out.innerHTML='<div class="empty">Error loading shifts: '+e+'</div>');
+}
+
+// ── Admin ─────────────────────────────────────────────────
+function loadAdminStaff() {
+  const el=document.getElementById('admin-staff-list');
+  el.innerHTML='<div class="loader">Loading</div>';
+  api('getStaff',[],staff=>{
+    staffCache=staff;
+    el.innerHTML=staff.map(s=>{
+      const pill=s.restaurant==='Podebradska'?'pill-p':'pill-k';
+      const pinPill=s.hasPin?'<span class="pill pill-ok">PIN set</span>':'<span class="pill pill-no">No PIN</span>';
+      const safeId=s.name.replace(/[^a-zA-Z0-9]/g,'_');
+      return `<div class="staff-row">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">${s.name}<span class="pill ${pill}">${s.restaurant}</span>${pinPill}</div>
+          <div style="font-size:12px;color:#8E8E93;margin-top:4px;display:flex;align-items:center;gap:6px">
+            <input type="number" id="rate_${safeId}" value="${s.rate}" style="width:80px;padding:4px 8px;font-size:13px;display:inline-block" min="0"/> CZK/hr
+            <button class="btn small" onclick="saveRate('${s.name}','${safeId}')">Save</button>
+          </div>
+        </div>
+        <button class="btn small danger" style="margin-left:8px" onclick="doResetPin('${s.name}')" ${!s.hasPin?'disabled':''}>${s.hasPin?'Reset PIN':'No PIN'}</button>
+      </div>`;
+    }).join('');
+  },e=>el.innerHTML='<div class="empty">Error loading staff: '+e+'</div>');
+}
+
+function saveRate(name,safeId) {
+  const rate=document.getElementById('rate_'+safeId).value;
+  api('updateRate',[name,rate],()=>showToast('clock-toast','Rate updated for '+name+'.'),
+    ()=>showToast('clock-toast','Error updating rate.',true));
+}
+
+function doResetPin(name) {
+  if(!confirm('Reset PIN for '+name+'? They will need to set a new one next login.')) return;
+  api('resetPin',[name],()=>{showToast('clock-toast','PIN reset for '+name+'.');loadAdminStaff();},
+    ()=>showToast('clock-toast','Error resetting PIN.',true));
+}
+
+function exportCSV() {
+  api('getShifts',['','','','',''],shifts=>{
+    if(!shifts||!shifts.length){showToast('clock-toast','No shifts to export.',true);return;}
+    const rows=[['Name','Restaurant','Date','Clock In','Clock Out','Gross Hours','Break (hrs)','Paid Hours','Notes']];
+    shifts.forEach(s=>rows.push([s.name,s.restaurant,s.date,s.clockIn,s.clockOut,
+      (s.hours+(Number(s.breakHrs)||0)).toFixed(2),(Number(s.breakHrs)||0).toFixed(2),
+      s.hours.toFixed(2),s.notes||'']));
+    const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+    const a=document.createElement('a');
+    a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+    a.download='matoka_staff_hours.csv'; a.click();
+  },()=>showToast('clock-toast','Error exporting.',true));
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function showToast(id,msg,isErr) {
+  const t=document.getElementById(id);
+  t.textContent=msg;
+  t.className='toast '+(isErr?'err':'ok');
+  t.style.display='flex';
+  setTimeout(()=>t.style.display='none',4000);
+}
+function fmtMonth(ym) {
+  const [y,m]=ym.split('-');
+  return new Date(y,m-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+}
+</script>
+</body>
+</html>
